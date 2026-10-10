@@ -1,22 +1,61 @@
 # CircuitLens
 
-Phase 5 of a visual debugger for beginner breadboard circuits, built with Next.js, TypeScript, and Tailwind CSS.
+Phase 6: AI visual analysis for breadboard circuits, with an offline demo fallback. Built with Next.js and TypeScript.
 
 ## Run locally
 
 ```sh
 npm install
+cp .env.example .env.local
+# Set OPENAI_API_KEY in .env.local to enable AI mode.
 npm run dev
 ```
 
-Open http://localhost:3000. Production checks: `npm run typecheck` and `npm run build`.
+Open http://localhost:3000. `OPENAI_ANALYSIS_MODEL` defaults to `gpt-4.1-mini` and can be changed to an image-capable Responses API model supporting structured outputs. Keys are read only by server code; never use a `NEXT_PUBLIC_` key. Environment files are ignored by Git. Restart the server after changing configuration.
 
-With the development server running and Google Chrome installed, run `npm run test:smoke` to verify the demo, upload validation, responsive layouts, and browser errors. Run `npm run format` to format the source.
+Upload a JPG, PNG, or WebP (up to 10 MB), describe the intended behavior, and choose **Analyze Circuit**. AI mode sends the image and description through the backend to OpenAI; requests use `store: false`. Results are visual assessments, not electrical verification. Coordinates are approximate fractions of the original image from its top-left. Unclear or non-circuit images can return an uncertain status.
 
-The workspace supports local photo selection and drag-and-drop (JPG, PNG, WebP; 10 MB limit), a circuit description, an illustrated LED demo, and reactive workspace status. Images remain in browser memory. Once an image and description are provided, Analyze Circuit simulates a 1.4-second analysis and displays fixed mock results: a breadboard, a 5V DC supply, a red LED, an approximately 220-ohm resistor, four jumper wires, and two issues with suggested fixes. Changing the image or description clears results and cancels pending analysis. Results are explicitly labeled as simulated; no backend or AI API is connected.
+**Load Demo Circuit** immediately loads the illustrated sample and mock findings without a key or network call. The mode selector also allows simulated analysis of an uploaded photo. Failed AI analysis offers **Use Demo Mode**; simulated findings remain explicitly labeled. Demo rescans simulate a repaired circuit; AI rescans analyze the currently uploaded photo again. Upload a new photo after physically changing connections. Editing inputs or starting a new scan cancels pending results.
 
-Components live in `src/components`, including reusable `AnalysisPanel`, `ComponentList`, and `IssueCard` components. `SeverityBadge` supports HIGH, MEDIUM, and LOW. Mock data and result types live in `src/lib/mockAnalysis.ts`. The main workspace state lives in `src/app/page.tsx`; the visual system is in `src/app/globals.css`.
+## API and architecture
 
-After reviewing the issues and red image markers, apply the suggested fixes and select **Circuit Fixed? Scan Again**. A second simulated analysis shows **Circuit Verified**, with no issues and green connection indicators replacing the problem markers. **Start New Scan** clears the photo, description, results, and any pending analysis. The verification is a demo result, not an assessment of actual wiring. The smoke test covers this repair/rescan flow and cancellation; set `APP_URL` to test a server on a different port.
+`POST /api/analyze` accepts multipart form fields `image` (File) and `description` (1–2000 characters). Successful responses contain:
 
-**Load Demo Circuit** works from an empty workspace and immediately fills the description, local SVG illustration, five component groups, two mock issues, and three interactive annotations. No upload, external service, API key, or extra Analyze click is required. Reloading the demo cancels pending analysis and restores the sample issues, including after verification. All assets and mock data are bundled locally; the smoke test blocks external requests and verifies the workflow.
+```json
+{
+  "detectedComponents": [{ "name": "LED", "quantity": 1, "detail": "Red" }],
+  "circuitStatus": "issues_detected",
+  "issues": [
+    {
+      "id": "led-polarity",
+      "severity": "HIGH",
+      "title": "Possible reversed LED",
+      "explanation": "The visible polarity may be reversed.",
+      "suggestedFix": "Check cathode orientation.",
+      "coordinates": { "x": 0.46, "y": 0.27 }
+    }
+  ]
+}
+```
+
+Statuses: `issues_detected`, `no_obvious_issues`, `uncertain`. Severities: `HIGH`, `MEDIUM`, `LOW`. Errors return `{ "error": "..." }` with an appropriate HTTP status. Upload bodies are bounded even without Content-Length; file signatures and MIME types must match. The provider has a 60-second timeout and sanitizes upstream errors.
+
+- `src/lib/analysis/schema.ts`: shared strict JSON schema and runtime validation, including coordinate bounds, unique issue IDs, and status consistency. Validated both server-side and before rendering.
+- `src/lib/analysis/provider.ts`: server-only provider interface, OpenAI implementation, and factory. Replace the factory/provider for future computer vision while retaining the JSON contract.
+- `src/lib/analysis/types.ts`: adapter from provider output to components and image annotations.
+- `src/app/api/analyze/route.ts`: upload validation and provider orchestration.
+- `src/lib/mockAnalysis.ts`: preserved offline mock fixtures.
+
+The implementation follows the official [Responses API](https://developers.openai.com/api/reference/resources/responses/methods/create) and [Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs?api-mode=responses) documentation. Before public deployment, add authentication and deployment-level rate limiting to control access and API spend.
+
+## Checks
+
+```sh
+npm run typecheck
+npm run test:analysis
+npm run build
+# With the app running and Google Chrome installed:
+npm run test:smoke
+```
+
+API/provider tests use stubbed upstream responses and require no key or billable requests. Browser smoke tests cover demo flows, uploads, annotations, cancellation, responsive layouts, AI response rendering, invalid JSON rejection, and demo fallback. Set `APP_URL` to test another port. A live model request requires your server API key and account access.

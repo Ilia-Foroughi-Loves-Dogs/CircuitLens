@@ -1,5 +1,5 @@
 import { Wrench } from "lucide-react";
-import type { CircuitIssue, Severity } from "@/lib/mockAnalysis";
+import type { CircuitIssue, Severity } from "@/lib/analysis/types";
 
 export function SeverityBadge({ severity }: { severity: Severity }) {
   return (

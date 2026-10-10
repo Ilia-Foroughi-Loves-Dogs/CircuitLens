@@ -1,22 +1,8 @@
-import type { CircuitAnnotation } from "./annotations";
-
-export type Severity = "HIGH" | "MEDIUM" | "LOW";
-
-export type CircuitIssue = {
-  id: string;
-  severity: Severity;
-  title: string;
-  explanation: string;
-  fix: string;
-};
-
-export type AnalysisResult = {
-  components: { name: string; quantity: number; detail?: string }[];
-  issues: CircuitIssue[];
-  annotations: CircuitAnnotation[];
-};
+import type { AnalysisResult } from "./analysis/types";
+export type { AnalysisResult, CircuitIssue, Severity } from "./analysis/types";
 
 export const mockAnalysis: AnalysisResult = {
+  circuitStatus: "issues_detected",
   annotations: [
     {
       id: "led-highlight",
@@ -73,6 +59,7 @@ export const mockAnalysis: AnalysisResult = {
 };
 
 export const verifiedAnalysis: AnalysisResult = {
+  circuitStatus: "no_obvious_issues",
   components: mockAnalysis.components,
   issues: [],
   annotations: mockAnalysis.annotations.map((annotation) => ({

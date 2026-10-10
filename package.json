@@ -8,13 +8,16 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "test:smoke": "node scripts/smoke-test.mjs",
-    "format": "prettier --write src scripts package.json tsconfig.json postcss.config.mjs README.md"
+    "format": "prettier --write src scripts package.json tsconfig.json postcss.config.mjs README.md",
+    "test:analysis": "node scripts/analysis-test.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
     "next": "^16.0.0",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "server-only": "^0.0.1",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.0",

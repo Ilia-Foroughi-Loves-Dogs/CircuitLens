@@ -1,4 +1,4 @@
-import type { AnalysisResult } from "@/lib/mockAnalysis";
+import type { AnalysisResult } from "@/lib/analysis/types";
 
 export function ComponentList({
   components,

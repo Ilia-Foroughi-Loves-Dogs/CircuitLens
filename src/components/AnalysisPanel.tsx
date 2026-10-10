@@ -1,11 +1,12 @@
 import { CircleCheck, LoaderCircle, ScanLine } from "lucide-react";
-import type { AnalysisResult } from "@/lib/mockAnalysis";
+import type { AnalysisResult } from "@/lib/analysis/types";
 import { ComponentList } from "./ComponentList";
 import { IssueCard } from "./IssueCard";
 
 export type AnalysisState = "idle" | "analyzing" | "complete";
 
 export function AnalysisPanel({
+  mode,
   state,
   result,
   selectedIssueId,
@@ -13,6 +14,7 @@ export function AnalysisPanel({
   onRescan,
   onStartNewScan,
 }: {
+  mode: "ai" | "demo";
   state: AnalysisState;
   result: AnalysisResult | null;
   selectedIssueId: string | null;
@@ -21,7 +23,8 @@ export function AnalysisPanel({
   onStartNewScan: () => void;
 }) {
   if (state === "idle") return null;
-  const verified = state === "complete" && result?.issues.length === 0;
+  const verified =
+    state === "complete" && result?.circuitStatus === "no_obvious_issues";
   return (
     <section
       className={`panel analysis-panel ${verified ? "analysis-verified" : ""}`}
@@ -31,9 +34,11 @@ export function AnalysisPanel({
       <div className="panel-heading">
         <div>
           <ScanLine size={17} className="mint" />
-          <h2>Mock circuit analysis</h2>
+          <h2>
+            {mode === "demo" ? "Mock circuit analysis" : "AI circuit analysis"}
+          </h2>
         </div>
-        <span className="phase-tag">MOCK</span>
+        <span className="phase-tag">{mode === "demo" ? "MOCK" : "AI"}</span>
       </div>
       <div role="status" aria-live="polite">
         {state === "analyzing" ? (
@@ -47,13 +52,17 @@ export function AnalysisPanel({
             <div className="verification-success">
               <CircleCheck size={28} />
               <div>
-                <h3>Circuit Verified</h3>
+                <h3>
+                  {mode === "demo" ? "Circuit Verified" : "No obvious issues"}
+                </h3>
                 <p>No obvious wiring problems detected.</p>
               </div>
             </div>
           ) : (
             <p className="analysis-summary">
-              {result.issues.length} issues detected
+              {result.circuitStatus === "uncertain"
+                ? "Circuit status uncertain"
+                : `${result.issues.length} issues detected`}
             </p>
           ))
         )}
@@ -61,8 +70,9 @@ export function AnalysisPanel({
       {state === "complete" && result && (
         <>
           <p className="analysis-note">
-            Simulated results for demonstration. These findings are not based on
-            your photo.
+            {mode === "demo"
+              ? "Simulated results for demonstration. These findings are not based on your photo."
+              : "AI visual assessment. Coordinates are approximate; hidden connections and electrical behavior may need manual checks."}
           </p>
           <ComponentList components={result.components} />
           <div className="issue-list">

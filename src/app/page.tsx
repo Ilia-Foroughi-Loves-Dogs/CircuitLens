@@ -19,6 +19,9 @@ import {
   type AnalysisResult,
 } from "@/lib/mockAnalysis";
 
+import { parseAnalysis } from "@/lib/analysis/schema";
+import { toAnalysisResult } from "@/lib/analysis/types";
+
 const demoDescription =
   "The red LED should light up when the circuit is connected to the 5V power supply. A 220Ω resistor limits the current through the LED.";
 
@@ -30,28 +33,78 @@ export default function Home() {
   const [analysisState, setAnalysisState] = useState<AnalysisState>("idle");
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
+  const [mode, setMode] = useState<"ai" | "demo">("ai");
+  const uploadedFile = useRef<File | null>(null);
+  const requestController = useRef<AbortController | null>(null);
   const analysisTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const resetAnalysis = () => {
+    requestController.current?.abort();
+    requestController.current = null;
+    setError(null);
     if (analysisTimer.current) clearTimeout(analysisTimer.current);
     analysisTimer.current = null;
     setAnalysisState("idle");
     setResult(null);
     setSelectedIssueId(null);
   };
-  const analyze = (rescan = false) => {
-    if (!image || !description.trim() || analysisTimer.current) return;
+  const analyze = async (rescan = false) => {
+    if (!image || !description.trim() || analysisState === "analyzing") return;
+    setError(null);
     setResult(null);
     setSelectedIssueId(null);
     setAnalysisState("analyzing");
-    analysisTimer.current = setTimeout(() => {
-      analysisTimer.current = null;
-      setResult(rescan ? verifiedAnalysis : mockAnalysis);
+    if (mode === "demo") {
+      analysisTimer.current = setTimeout(() => {
+        analysisTimer.current = null;
+        setResult(rescan ? verifiedAnalysis : mockAnalysis);
+        setAnalysisState("complete");
+      }, 1400);
+      return;
+    }
+    if (!uploadedFile.current) {
+      setError("Upload a photo to use AI analysis, or select demo mode.");
+      setAnalysisState("idle");
+      return;
+    }
+    const controller = new AbortController();
+    requestController.current = controller;
+    try {
+      const form = new FormData();
+      form.append("image", uploadedFile.current);
+      form.append("description", description);
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        body: form,
+        signal: controller.signal,
+      });
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(
+          typeof data.error === "string"
+            ? data.error
+            : "Analysis failed. Retry or use demo mode.",
+        );
+      const validated = parseAnalysis(data);
+      if (controller.signal.aborted) return;
+      setResult(toAnalysisResult(validated));
       setAnalysisState("complete");
-    }, 1400);
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      setError(
+        error instanceof Error && error.name !== "ZodError"
+          ? error.message
+          : "Invalid analysis response. Retry or use demo mode.",
+      );
+      setAnalysisState("idle");
+    } finally {
+      if (requestController.current === controller)
+        requestController.current = null;
+    }
   };
   const objectUrl = useRef<string | null>(null);
   useEffect(
     () => () => {
+      requestController.current?.abort();
       if (objectUrl.current) URL.revokeObjectURL(objectUrl.current);
       if (analysisTimer.current) clearTimeout(analysisTimer.current);
     },
@@ -64,6 +117,8 @@ export default function Home() {
   const startNewScan = () => {
     resetAnalysis();
     releaseImage();
+    uploadedFile.current = null;
+    setMode("ai");
     setImage(null);
     setName(null);
     setDescription("");
@@ -79,6 +134,7 @@ export default function Home() {
       return;
     }
     releaseImage();
+    uploadedFile.current = file;
     const url = URL.createObjectURL(file);
     objectUrl.current = url;
     setImage(url);
@@ -87,6 +143,8 @@ export default function Home() {
     resetAnalysis();
   };
   const loadDemo = () => {
+    uploadedFile.current = null;
+    setMode("demo");
     resetAnalysis();
     releaseImage();
     setImage("/demo-circuit.svg");
@@ -113,7 +171,7 @@ export default function Home() {
             FROM BREADBOARD TO UNDERSTANDING
           </span>
           <span className="version-badge">
-            <span className="status-dot" /> v0.5 / INSTANT DEMO
+            <span className="status-dot" /> v0.6 / AI + DEMO
           </span>
         </div>
       </header>
@@ -190,6 +248,36 @@ export default function Home() {
                 <span>Start simple. Details help.</span>
                 <span>{description.length} / 2000</span>
               </div>
+              <label className="input-label" htmlFor="analysis-mode">
+                ANALYSIS MODE
+              </label>
+              <select
+                id="analysis-mode"
+                value={mode}
+                onChange={(event) => {
+                  resetAnalysis();
+                  setMode(event.target.value as "ai" | "demo");
+                }}
+              >
+                <option value="ai">AI image analysis</option>
+                <option value="demo">Demo / simulated analysis</option>
+              </select>
+              <p className="panel-description">
+                {mode === "ai"
+                  ? "Your image and description are sent to the server and OpenAI for analysis."
+                  : "Simulated findings; demo mode does not analyze your photo."}
+              </p>
+              {error && mode === "ai" && (
+                <button
+                  className="button demo-button"
+                  onClick={() => {
+                    resetAnalysis();
+                    setMode("demo");
+                  }}
+                >
+                  Use Demo Mode
+                </button>
+              )}
               {analysisState !== "complete" && (
                 <button
                   className="button analyze-button"
@@ -219,10 +307,12 @@ export default function Home() {
               hasDescription={!!description.trim()}
               analysisState={analysisState}
               verified={
-                analysisState === "complete" && result?.issues.length === 0
+                analysisState === "complete" &&
+                result?.circuitStatus === "no_obvious_issues"
               }
             />
             <AnalysisPanel
+              mode={mode}
               state={analysisState}
               result={result}
               selectedIssueId={selectedIssueId}
@@ -234,8 +324,8 @@ export default function Home() {
         </div>
         <div className="workspace-footer">
           <span>
-            <ShieldCheck size={15} /> Your photos stay in this browser. No
-            uploads to a server.
+            <ShieldCheck size={15} /> AI mode sends photos for analysis. Demo
+            mode stays in this browser.
           </span>
           <span>
             <Sparkles size={14} /> Built for curious minds.
@@ -262,12 +352,12 @@ export default function Home() {
           </div>
           <div className="workflow-step">
             <span>
-              03 / UNDERSTAND <b>MOCK PREVIEW</b>
+              03 / UNDERSTAND <b>AI + DEMO</b>
             </span>
             <h3>Find the missing link</h3>
             <p>
               Find problems on the image, apply the suggested fixes, then scan
-              again to see your circuit verified in this mock demo.
+              again to review your updated circuit.
             </p>
           </div>
         </section>

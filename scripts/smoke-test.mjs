@@ -191,6 +191,65 @@ try {
     path: "/tmp/circuitlens-mobile.png",
     fullPage: true,
   });
+  await page.getByRole("button", { name: "Start New Scan" }).click();
+  await page
+    .locator("input[type=file]")
+    .setInputFiles({
+      name: "ai.png",
+      mimeType: "image/png",
+      buffer: Buffer.from(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j6XkAAAAASUVORK5CYII=",
+        "base64",
+      ),
+    });
+  await page.locator("#description").fill("LED should light");
+  let apiCalls = 0;
+  const aiResult = {
+    detectedComponents: [{ name: "Test LED", quantity: 1, detail: "Visible" }],
+    circuitStatus: "issues_detected",
+    issues: [
+      {
+        id: "ai-led",
+        severity: "LOW",
+        title: "Check LED",
+        explanation: "Polarity is unclear",
+        suggestedFix: "Inspect the cathode",
+        coordinates: { x: 0.25, y: 0.5 },
+      },
+    ],
+  };
+  await page.route("**/api/analyze", async (route) => {
+    apiCalls++;
+    assert.match(route.request().postData(), /LED should light/);
+    await route.fulfill({
+      json:
+        apiCalls === 1
+          ? aiResult
+          : {
+              ...aiResult,
+              issues: [{ ...aiResult.issues[0], coordinates: { x: 5, y: 0 } }],
+            },
+    });
+  });
+  await analyze.click();
+  await expect(
+    page.getByRole("heading", { name: "AI circuit analysis" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Inspect the cathode", { exact: true }),
+  ).toBeVisible();
+  await expect(page.locator('[data-annotation-id="issue-ai-led"]')).toHaveCount(
+    1,
+  );
+  await page.getByRole("button", { name: "Circuit Fixed? Scan Again" }).click();
+  await expect(page.locator(".error-message")).toContainText(
+    "Invalid analysis response",
+  );
+  await expect(page.locator(".issue-card")).toHaveCount(0);
+  await page.getByRole("button", { name: "Use Demo Mode" }).click();
+  await analyze.click();
+  await page.getByText("2 issues detected").waitFor();
+  assert.equal(apiCalls, 2);
   assert.deepEqual(errors, []);
   assert.deepEqual(externalRequests, []);
   console.log(

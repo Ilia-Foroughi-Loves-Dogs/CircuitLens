@@ -17,7 +17,7 @@ export function CircuitStatus({
       <div className="status-title">
         <Radar size={17} />
         <h2>Workspace status</h2>
-        <span className="phase-tag">PHASE 04</span>
+        <span className="phase-tag">PHASE 06</span>
       </div>
       <div className="status-row">
         {hasImage ? (
@@ -48,19 +48,19 @@ export function CircuitStatus({
         <div>
           <strong>
             {verified
-              ? "Circuit Verified"
+              ? "No obvious issues"
               : analysisState === "complete"
-                ? "Mock analysis complete"
+                ? "Analysis complete"
                 : analysisState === "analyzing"
                   ? "Analyzing your breadboard…"
-                  : "Mock analysis mode"}
+                  : "Ready for analysis"}
           </strong>
           <p>
             {verified
-              ? "Your simulated repair and rescan is complete."
+              ? "Review the findings below."
               : analysisState === "complete"
-                ? "Review the simulated components and suggested fixes below."
-                : "Add an image and expected behavior to try simulated circuit analysis."}
+                ? "Review the components and suggested fixes below."
+                : "Add an image and expected behavior to analyze your circuit."}
           </p>
         </div>
       </div>
