@@ -46,7 +46,8 @@ export const mockAnalysis: AnalysisResult = {
     },
   ],
   components: [
-    { name: "Arduino Uno", quantity: 1 },
+    { name: "Breadboard", quantity: 1 },
+    { name: "5V DC power supply", quantity: 1 },
     { name: "Red LED", quantity: 1 },
     { name: "Resistor", quantity: 1, detail: "Approximately 220 ohms" },
     { name: "Jumper wires", quantity: 4 },
@@ -65,8 +66,8 @@ export const mockAnalysis: AnalysisResult = {
       severity: "MEDIUM",
       title: "Possible incorrect jumper row",
       explanation:
-        "The ground jumper appears to terminate one row above the LED cathode.",
-      fix: "Move the jumper from row 14 to row 15.",
+        "The ground jumper appears to terminate in a neighboring breadboard strip, leaving the LED return path open.",
+      fix: "Move the ground jumper into the same connected strip as the LED cathode.",
     },
   ],
 };

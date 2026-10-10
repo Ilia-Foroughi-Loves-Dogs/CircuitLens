@@ -11,14 +11,27 @@ try {
   page.on("console", (message) => {
     if (message.type() === "error") errors.push(message.text());
   });
-  await page.goto(process.env.APP_URL ?? "http://localhost:3000");
+  const appUrl = process.env.APP_URL ?? "http://localhost:3000";
+  const externalRequests = [];
+  await page.route("**/*", (route) => {
+    const url = new URL(route.request().url());
+    if (
+      ["http:", "https:"].includes(url.protocol) &&
+      url.origin !== new URL(appUrl).origin
+    ) {
+      externalRequests.push(url.href);
+      return route.abort();
+    }
+    return route.continue();
+  });
+  await page.goto(appUrl);
   await page
     .getByRole("heading", { name: "Make sense of every connection." })
     .waitFor();
   const analyze = page.getByRole("button", { name: "Analyze Circuit" });
   await expect(analyze).toBeDisabled();
   await page.getByRole("button", { name: "Load Demo Circuit" }).click();
-  await expect(analyze).toBeEnabled();
+  await expect(analyze).toHaveCount(0);
   assert.match(await page.locator("#description").inputValue(), /220Ω/);
   await expect
     .poll(() =>
@@ -27,18 +40,17 @@ try {
         .evaluate((img) => img.complete && img.naturalWidth > 0),
     )
     .toBe(true);
-  await analyze.click();
-  await expect(
-    page.getByRole("button", { name: "Analyzing Circuit…" }),
-  ).toBeDisabled();
   await page.getByText("2 issues detected").waitFor();
-  await expect(page.locator(".component-list li")).toHaveCount(4);
+  await expect(page.locator(".component-list li")).toHaveCount(5);
   await expect(page.locator(".issue-card")).toHaveCount(2);
   await expect(
     page.getByText("LED polarity may be reversed", { exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByText("Move the jumper from row 14 to row 15.", { exact: true }),
+    page.getByText(
+      "Move the ground jumper into the same connected strip as the LED cathode.",
+      { exact: true },
+    ),
   ).toBeVisible();
   await expect(page.locator(".severity-high")).toHaveText("HIGH");
   await expect(page.locator(".severity-medium")).toHaveText("MEDIUM");
@@ -79,13 +91,16 @@ try {
     page.locator(".annotation-correct .annotation-marker"),
   ).toHaveCount(3);
   await expect(page.locator(".annotation.is-selected")).toHaveCount(0);
+  await page.getByRole("button", { name: "Load Demo Circuit" }).click();
+  await expect(page.locator(".issue-card")).toHaveCount(2);
+  await expect(page.locator(".annotation.annotation-problem")).toHaveCount(2);
+  await expect(page.locator(".annotation.is-selected")).toHaveCount(0);
   await page.getByRole("button", { name: "Start New Scan" }).click();
   await expect(page.locator(".image-viewer")).toHaveCount(0);
   await expect(page.locator("#description")).toHaveValue("");
   await expect(page.locator(".analysis-panel")).toHaveCount(0);
   await expect(analyze).toBeDisabled();
   await page.getByRole("button", { name: "Load Demo Circuit" }).click();
-  await analyze.click();
   await page.getByText("2 issues detected").waitFor();
   await page.getByRole("button", { name: "Circuit Fixed? Scan Again" }).click();
   await page.getByRole("button", { name: "Start New Scan" }).click();
@@ -124,9 +139,8 @@ try {
   await analyze.click();
   await page.getByRole("button", { name: "Load Demo Circuit" }).click();
   await page.waitForTimeout(1600);
-  await expect(page.locator(".analysis-panel")).toHaveCount(0);
-  await expect(page.locator(".annotation-overlay")).toHaveCount(0);
-  await analyze.click();
+  await expect(page.locator(".issue-card")).toHaveCount(2);
+  await expect(page.locator(".annotation-marker")).toHaveCount(3);
   await page.getByText("2 issues detected").waitFor();
   await page.screenshot({
     path: "/tmp/circuitlens-desktop.png",
@@ -178,6 +192,7 @@ try {
     fullPage: true,
   });
   assert.deepEqual(errors, []);
+  assert.deepEqual(externalRequests, []);
   console.log(
     "Passed: demo, local upload, file validation, mock analysis, repair/rescan, verified markers, new scan, loading, result reset, cancellation, responsive widths, and browser runtime checks.",
   );

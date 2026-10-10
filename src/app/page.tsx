@@ -87,12 +87,14 @@ export default function Home() {
     resetAnalysis();
   };
   const loadDemo = () => {
+    resetAnalysis();
     releaseImage();
     setImage("/demo-circuit.svg");
     setName("LED starter circuit");
     setDescription(demoDescription);
     setError(null);
-    resetAnalysis();
+    setResult(mockAnalysis);
+    setAnalysisState("complete");
   };
   const ready = !!image && !!description.trim();
   return (
@@ -111,7 +113,7 @@ export default function Home() {
             FROM BREADBOARD TO UNDERSTANDING
           </span>
           <span className="version-badge">
-            <span className="status-dot" /> v0.4 / REPAIR & RESCAN
+            <span className="status-dot" /> v0.5 / INSTANT DEMO
           </span>
         </div>
       </header>
@@ -206,6 +208,11 @@ export default function Home() {
                 Load Demo Circuit
                 <span className="demo-label">LED + RESISTOR</span>
               </button>
+              <p className="panel-description">
+                No photo needed. Load a complete sample, explore the highlighted
+                issues, then try the simulated repair and rescan. Works locally
+                without API keys.
+              </p>
             </section>
             <CircuitStatus
               hasImage={!!image}
