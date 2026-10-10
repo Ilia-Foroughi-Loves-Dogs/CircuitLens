@@ -743,6 +743,138 @@ textarea::placeholder {
   color: #ffb4a5;
   margin-bottom: 0;
 }
+.analysis-panel {
+  padding: 21px;
+}
+.analysis-summary {
+  font-size: 18px;
+  margin: 20px 0 8px;
+  color: #ffce91;
+}
+.analysis-note {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.analysis-loading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--mint);
+  margin: 22px 0 4px;
+  font-size: 12px;
+}
+.component-list {
+  margin: 22px 0;
+}
+.component-list h3 {
+  font-size: 12px;
+  font-weight: 500;
+}
+.component-list ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.component-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.component-list small {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  margin-top: 5px;
+}
+.component-quantity {
+  color: var(--mint);
+  font-family: monospace;
+}
+.issue-list {
+  display: grid;
+  gap: 12px;
+}
+.issue-card {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #0d1316;
+}
+.issue-card h3 {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 12px 0 8px;
+  font-weight: 500;
+}
+.issue-card p {
+  color: #a5b5b9;
+  font-size: 11px;
+  line-height: 1.8;
+  margin: 0;
+}
+.severity-badge {
+  display: inline-block;
+  padding: 4px 7px;
+  border: 1px solid;
+  border-radius: 4px;
+  font:
+    9px ui-monospace,
+    monospace;
+  letter-spacing: 0.6px;
+}
+.severity-high {
+  color: #ffb4a5;
+  background: #351e1c;
+  border-color: #744037;
+}
+.severity-medium {
+  color: #ffce91;
+  background: #302619;
+  border-color: #695334;
+}
+.severity-low {
+  color: #a8d5ff;
+  background: #192b3b;
+  border-color: #365977;
+}
+.issue-fix {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 14px;
+  padding-top: 13px;
+  border-top: 1px solid var(--border);
+}
+.issue-fix > svg {
+  flex-shrink: 0;
+  color: var(--mint);
+  margin-top: 2px;
+}
+.issue-fix strong {
+  display: block;
+  color: var(--mint);
+  font-size: 10px;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+.spinner {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}
 @media (min-width: 1440px) {
   .app-shell {
     padding: 0 80px;

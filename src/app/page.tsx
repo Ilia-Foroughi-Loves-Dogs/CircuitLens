@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { CircuitUploader } from "@/components/CircuitUploader";
 import { CircuitStatus } from "@/components/CircuitStatus";
+import { AnalysisPanel, type AnalysisState } from "@/components/AnalysisPanel";
+import { mockAnalysis, type AnalysisResult } from "@/lib/mockAnalysis";
 
 const demoDescription =
   "The red LED should light up when the circuit is connected to the 5V power supply. A 220Ω resistor limits the current through the LED.";
@@ -21,11 +23,30 @@ export default function Home() {
   const [name, setName] = useState<string | null>(null);
   const [description, setDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [requested, setRequested] = useState(false);
+  const [analysisState, setAnalysisState] = useState<AnalysisState>("idle");
+  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const analysisTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const resetAnalysis = () => {
+    if (analysisTimer.current) clearTimeout(analysisTimer.current);
+    analysisTimer.current = null;
+    setAnalysisState("idle");
+    setResult(null);
+  };
+  const analyze = () => {
+    if (!image || !description.trim() || analysisTimer.current) return;
+    setResult(null);
+    setAnalysisState("analyzing");
+    analysisTimer.current = setTimeout(() => {
+      analysisTimer.current = null;
+      setResult(mockAnalysis);
+      setAnalysisState("complete");
+    }, 1400);
+  };
   const objectUrl = useRef<string | null>(null);
   useEffect(
     () => () => {
       if (objectUrl.current) URL.revokeObjectURL(objectUrl.current);
+      if (analysisTimer.current) clearTimeout(analysisTimer.current);
     },
     [],
   );
@@ -48,7 +69,7 @@ export default function Home() {
     setImage(url);
     setName(file.name);
     setError(null);
-    setRequested(false);
+    resetAnalysis();
   };
   const loadDemo = () => {
     releaseImage();
@@ -56,7 +77,7 @@ export default function Home() {
     setName("LED starter circuit");
     setDescription(demoDescription);
     setError(null);
-    setRequested(false);
+    resetAnalysis();
   };
   const ready = !!image && !!description.trim();
   return (
@@ -75,7 +96,7 @@ export default function Home() {
             FROM BREADBOARD TO UNDERSTANDING
           </span>
           <span className="version-badge">
-            <span className="status-dot" /> v0.1 / FOUNDATION
+            <span className="status-dot" /> v0.2 / MOCK ANALYSIS
           </span>
         </div>
       </header>
@@ -141,7 +162,7 @@ export default function Home() {
                 value={description}
                 onChange={(e) => {
                   setDescription(e.target.value);
-                  setRequested(false);
+                  resetAnalysis();
                 }}
                 placeholder="e.g. The LED should turn on when I press the button, and turn off when I release it."
               />
@@ -151,11 +172,13 @@ export default function Home() {
               </div>
               <button
                 className="button analyze-button"
-                disabled={!ready}
-                onClick={() => setRequested(true)}
+                disabled={!ready || analysisState === "analyzing"}
+                onClick={analyze}
               >
                 <ScanLine size={17} />
-                Analyze Circuit
+                {analysisState === "analyzing"
+                  ? "Analyzing Circuit…"
+                  : "Analyze Circuit"}
                 <ArrowRight size={18} />
               </button>
               <button className="button demo-button" onClick={loadDemo}>
@@ -167,8 +190,9 @@ export default function Home() {
             <CircuitStatus
               hasImage={!!image}
               hasDescription={!!description.trim()}
-              requested={requested}
+              analysisState={analysisState}
             />
+            <AnalysisPanel state={analysisState} result={result} />
           </div>
         </div>
         <div className="workspace-footer">
@@ -199,13 +223,14 @@ export default function Home() {
             <h3>Share the intention</h3>
             <p>Explain the behavior you’re aiming for, in your own words.</p>
           </div>
-          <div className="workflow-step future">
+          <div className="workflow-step">
             <span>
-              03 / UNDERSTAND <b>COMING SOON</b>
+              03 / UNDERSTAND <b>MOCK PREVIEW</b>
             </span>
             <h3>Find the missing link</h3>
             <p>
-              Visual guidance to help you spot issues and learn along the way.
+              Preview detected components, possible issues, and suggested fixes
+              with mock analysis.
             </p>
           </div>
         </section>

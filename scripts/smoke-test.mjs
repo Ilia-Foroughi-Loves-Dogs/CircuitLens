@@ -11,7 +11,7 @@ try {
   page.on("console", (message) => {
     if (message.type() === "error") errors.push(message.text());
   });
-  await page.goto("http://127.0.0.1:3000");
+  await page.goto("http://localhost:3000");
   await page
     .getByRole("heading", { name: "Make sense of every connection." })
     .waitFor();
@@ -28,40 +28,54 @@ try {
     )
     .toBe(true);
   await analyze.click();
-  await page.getByText("Your circuit workspace is ready.").waitFor();
+  await expect(
+    page.getByRole("button", { name: "Analyzing Circuit…" }),
+  ).toBeDisabled();
+  await page.getByText("2 issues detected").waitFor();
+  await expect(page.locator(".component-list li")).toHaveCount(4);
+  await expect(page.locator(".issue-card")).toHaveCount(2);
+  await expect(
+    page.getByText("LED polarity may be reversed", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Move the jumper from row 14 to row 15.", { exact: true }),
+  ).toBeVisible();
+  await expect(page.locator(".severity-high")).toHaveText("HIGH");
+  await expect(page.locator(".severity-medium")).toHaveText("MEDIUM");
   await page.locator("#description").fill("");
   await expect(analyze).toBeDisabled();
-  await page
-    .locator("input[type=file]")
-    .setInputFiles({
-      name: "invalid.txt",
-      mimeType: "text/plain",
-      buffer: Buffer.from("invalid"),
-    });
+  await expect(page.locator(".analysis-panel")).toHaveCount(0);
+  await page.locator("input[type=file]").setInputFiles({
+    name: "invalid.txt",
+    mimeType: "text/plain",
+    buffer: Buffer.from("invalid"),
+  });
   await page
     .getByRole("alert")
     .filter({ hasText: "Please choose a JPG" })
     .waitFor();
-  await page
-    .locator("input[type=file]")
-    .setInputFiles({
-      name: "large.png",
-      mimeType: "image/png",
-      buffer: Buffer.alloc(10 * 1024 * 1024 + 1),
-    });
+  await page.locator("input[type=file]").setInputFiles({
+    name: "large.png",
+    mimeType: "image/png",
+    buffer: Buffer.alloc(10 * 1024 * 1024 + 1),
+  });
   await page.getByRole("alert").filter({ hasText: "too large" }).waitFor();
-  await page
-    .locator("input[type=file]")
-    .setInputFiles({
-      name: "test.png",
-      mimeType: "image/png",
-      buffer: Buffer.from(
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j6XkAAAAASUVORK5CYII=",
-        "base64",
-      ),
-    });
+  await page.locator("input[type=file]").setInputFiles({
+    name: "test.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j6XkAAAAASUVORK5CYII=",
+      "base64",
+    ),
+  });
   await expect(page.locator(".error-message")).toHaveCount(0);
+  await page.locator("#description").fill("The LED should light up.");
+  await analyze.click();
   await page.getByRole("button", { name: "Load Demo Circuit" }).click();
+  await page.waitForTimeout(1600);
+  await expect(page.locator(".analysis-panel")).toHaveCount(0);
+  await analyze.click();
+  await page.getByText("2 issues detected").waitFor();
   await page.screenshot({
     path: "/tmp/circuitlens-desktop.png",
     fullPage: true,
@@ -83,7 +97,7 @@ try {
   });
   assert.deepEqual(errors, []);
   console.log(
-    "Passed: demo, local upload, file validation, analysis placeholder, responsive widths, and browser runtime checks.",
+    "Passed: demo, local upload, file validation, mock analysis, loading, result reset, cancellation, responsive widths, and browser runtime checks.",
   );
 } finally {
   await browser.close();

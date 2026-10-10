@@ -1,20 +1,21 @@
+import type { AnalysisState } from "./AnalysisPanel";
 import { CircleCheck, CircleDashed, Radar } from "lucide-react";
 
 export function CircuitStatus({
   hasImage,
   hasDescription,
-  requested,
+  analysisState,
 }: {
   hasImage: boolean;
   hasDescription: boolean;
-  requested: boolean;
+  analysisState: AnalysisState;
 }) {
   return (
     <section className="panel status-panel" aria-live="polite">
       <div className="status-title">
         <Radar size={17} />
         <h2>Workspace status</h2>
-        <span className="phase-tag">PHASE 01</span>
+        <span className="phase-tag">PHASE 02</span>
       </div>
       <div className="status-row">
         {hasImage ? (
@@ -38,16 +39,22 @@ export function CircuitStatus({
           {hasDescription ? "Added" : "Waiting"}
         </span>
       </div>
-      <div className={`foundation-note ${requested ? "requested" : ""}`}>
+      <div
+        className={`foundation-note ${analysisState === "complete" ? "requested" : ""}`}
+      >
         <span className="status-dot" />
         <div>
           <strong>
-            {requested ? "Your circuit workspace is ready." : "Foundation mode"}
+            {analysisState === "complete"
+              ? "Mock analysis complete"
+              : analysisState === "analyzing"
+                ? "Analyzing your breadboard…"
+                : "Mock analysis mode"}
           </strong>
           <p>
-            {requested
-              ? "Circuit analysis is coming in a future phase. Your image and description are ready for the next step."
-              : "Set up your circuit here. Visual analysis will be available in a future phase."}
+            {analysisState === "complete"
+              ? "Review the simulated components and suggested fixes below."
+              : "Add an image and expected behavior to try simulated circuit analysis."}
           </p>
         </div>
       </div>
