@@ -11,7 +11,7 @@ try {
   page.on("console", (message) => {
     if (message.type() === "error") errors.push(message.text());
   });
-  await page.goto("http://localhost:3000");
+  await page.goto(process.env.APP_URL ?? "http://localhost:3000");
   await page
     .getByRole("heading", { name: "Make sense of every connection." })
     .waitFor();
@@ -61,6 +61,37 @@ try {
   await expect(
     page.getByRole("button", { name: "Issue 1 · Show on image" }),
   ).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "Circuit Fixed? Scan Again" }).click();
+  await expect(page.locator(".annotation-overlay")).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Analyzing Circuit…" }),
+  ).toBeDisabled();
+  await page.getByRole("heading", { name: "Circuit Verified" }).waitFor();
+  await expect(
+    page.getByText("No obvious wiring problems detected."),
+  ).toBeVisible();
+  await expect(page.locator(".analysis-panel")).toHaveClass(
+    /analysis-verified/,
+  );
+  await expect(page.locator(".issue-card")).toHaveCount(0);
+  await expect(page.locator(".annotation-problem")).toHaveCount(0);
+  await expect(
+    page.locator(".annotation-correct .annotation-marker"),
+  ).toHaveCount(3);
+  await expect(page.locator(".annotation.is-selected")).toHaveCount(0);
+  await page.getByRole("button", { name: "Start New Scan" }).click();
+  await expect(page.locator(".image-viewer")).toHaveCount(0);
+  await expect(page.locator("#description")).toHaveValue("");
+  await expect(page.locator(".analysis-panel")).toHaveCount(0);
+  await expect(analyze).toBeDisabled();
+  await page.getByRole("button", { name: "Load Demo Circuit" }).click();
+  await analyze.click();
+  await page.getByText("2 issues detected").waitFor();
+  await page.getByRole("button", { name: "Circuit Fixed? Scan Again" }).click();
+  await page.getByRole("button", { name: "Start New Scan" }).click();
+  await page.waitForTimeout(1600);
+  await expect(page.locator(".analysis-panel")).toHaveCount(0);
+  await page.getByRole("button", { name: "Load Demo Circuit" }).click();
   await page.locator("#description").fill("");
   await expect(analyze).toBeDisabled();
   await expect(page.locator(".analysis-panel")).toHaveCount(0);
@@ -148,7 +179,7 @@ try {
   });
   assert.deepEqual(errors, []);
   console.log(
-    "Passed: demo, local upload, file validation, mock analysis, loading, result reset, cancellation, responsive widths, and browser runtime checks.",
+    "Passed: demo, local upload, file validation, mock analysis, repair/rescan, verified markers, new scan, loading, result reset, cancellation, responsive widths, and browser runtime checks.",
   );
 } finally {
   await browser.close();

@@ -13,7 +13,11 @@ import {
 import { CircuitUploader } from "@/components/CircuitUploader";
 import { CircuitStatus } from "@/components/CircuitStatus";
 import { AnalysisPanel, type AnalysisState } from "@/components/AnalysisPanel";
-import { mockAnalysis, type AnalysisResult } from "@/lib/mockAnalysis";
+import {
+  mockAnalysis,
+  verifiedAnalysis,
+  type AnalysisResult,
+} from "@/lib/mockAnalysis";
 
 const demoDescription =
   "The red LED should light up when the circuit is connected to the 5V power supply. A 220Ω resistor limits the current through the LED.";
@@ -34,14 +38,14 @@ export default function Home() {
     setResult(null);
     setSelectedIssueId(null);
   };
-  const analyze = () => {
+  const analyze = (rescan = false) => {
     if (!image || !description.trim() || analysisTimer.current) return;
     setResult(null);
     setSelectedIssueId(null);
     setAnalysisState("analyzing");
     analysisTimer.current = setTimeout(() => {
       analysisTimer.current = null;
-      setResult(mockAnalysis);
+      setResult(rescan ? verifiedAnalysis : mockAnalysis);
       setAnalysisState("complete");
     }, 1400);
   };
@@ -56,6 +60,14 @@ export default function Home() {
   const releaseImage = () => {
     if (objectUrl.current) URL.revokeObjectURL(objectUrl.current);
     objectUrl.current = null;
+  };
+  const startNewScan = () => {
+    resetAnalysis();
+    releaseImage();
+    setImage(null);
+    setName(null);
+    setDescription("");
+    setError(null);
   };
   const upload = (file: File) => {
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
@@ -99,7 +111,7 @@ export default function Home() {
             FROM BREADBOARD TO UNDERSTANDING
           </span>
           <span className="version-badge">
-            <span className="status-dot" /> v0.3 / VISUAL DEBUGGING
+            <span className="status-dot" /> v0.4 / REPAIR & RESCAN
           </span>
         </div>
       </header>
@@ -176,17 +188,19 @@ export default function Home() {
                 <span>Start simple. Details help.</span>
                 <span>{description.length} / 2000</span>
               </div>
-              <button
-                className="button analyze-button"
-                disabled={!ready || analysisState === "analyzing"}
-                onClick={analyze}
-              >
-                <ScanLine size={17} />
-                {analysisState === "analyzing"
-                  ? "Analyzing Circuit…"
-                  : "Analyze Circuit"}
-                <ArrowRight size={18} />
-              </button>
+              {analysisState !== "complete" && (
+                <button
+                  className="button analyze-button"
+                  disabled={!ready || analysisState === "analyzing"}
+                  onClick={() => analyze()}
+                >
+                  <ScanLine size={17} />
+                  {analysisState === "analyzing"
+                    ? "Analyzing Circuit…"
+                    : "Analyze Circuit"}
+                  <ArrowRight size={18} />
+                </button>
+              )}
               <button className="button demo-button" onClick={loadDemo}>
                 <FlaskConical size={16} />
                 Load Demo Circuit
@@ -197,12 +211,17 @@ export default function Home() {
               hasImage={!!image}
               hasDescription={!!description.trim()}
               analysisState={analysisState}
+              verified={
+                analysisState === "complete" && result?.issues.length === 0
+              }
             />
             <AnalysisPanel
               state={analysisState}
               result={result}
               selectedIssueId={selectedIssueId}
               onSelectIssue={setSelectedIssueId}
+              onRescan={() => analyze(true)}
+              onStartNewScan={startNewScan}
             />
           </div>
         </div>
@@ -240,8 +259,8 @@ export default function Home() {
             </span>
             <h3>Find the missing link</h3>
             <p>
-              Preview detected components, possible issues, and suggested fixes
-              with mock analysis.
+              Find problems on the image, apply the suggested fixes, then scan
+              again to see your circuit verified in this mock demo.
             </p>
           </div>
         </section>

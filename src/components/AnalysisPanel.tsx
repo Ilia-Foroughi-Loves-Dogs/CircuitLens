@@ -1,4 +1,4 @@
-import { LoaderCircle, ScanLine } from "lucide-react";
+import { CircleCheck, LoaderCircle, ScanLine } from "lucide-react";
 import type { AnalysisResult } from "@/lib/mockAnalysis";
 import { ComponentList } from "./ComponentList";
 import { IssueCard } from "./IssueCard";
@@ -10,16 +10,21 @@ export function AnalysisPanel({
   result,
   selectedIssueId,
   onSelectIssue,
+  onRescan,
+  onStartNewScan,
 }: {
   state: AnalysisState;
   result: AnalysisResult | null;
   selectedIssueId: string | null;
   onSelectIssue: (id: string) => void;
+  onRescan: () => void;
+  onStartNewScan: () => void;
 }) {
   if (state === "idle") return null;
+  const verified = state === "complete" && result?.issues.length === 0;
   return (
     <section
-      className="panel analysis-panel"
+      className={`panel analysis-panel ${verified ? "analysis-verified" : ""}`}
       aria-label="Circuit analysis"
       aria-busy={state === "analyzing"}
     >
@@ -37,11 +42,20 @@ export function AnalysisPanel({
             Analyzing your breadboard…
           </p>
         ) : (
-          result && (
+          result &&
+          (verified ? (
+            <div className="verification-success">
+              <CircleCheck size={28} />
+              <div>
+                <h3>Circuit Verified</h3>
+                <p>No obvious wiring problems detected.</p>
+              </div>
+            </div>
+          ) : (
             <p className="analysis-summary">
               {result.issues.length} issues detected
             </p>
-          )
+          ))
         )}
       </div>
       {state === "complete" && result && (
@@ -62,8 +76,22 @@ export function AnalysisPanel({
               />
             ))}
           </div>
+          {!verified && (
+            <div className="repair-actions">
+              <p>
+                Apply the suggested fixes, then scan again to verify your
+                connections.
+              </p>
+              <button className="button analyze-button" onClick={onRescan}>
+                <ScanLine size={17} /> Circuit Fixed? Scan Again
+              </button>
+            </div>
+          )}
         </>
       )}
+      <button className="button demo-button" onClick={onStartNewScan}>
+        Start New Scan
+      </button>
     </section>
   );
 }

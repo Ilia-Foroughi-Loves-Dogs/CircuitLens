@@ -57,7 +57,9 @@ export function CircuitViewer({
       </div>
       {annotations.length > 0 && (
         <p className="annotation-legend">
-          Mock locations · Red: suspected issue · Green: appears correct
+          {annotations.some((annotation) => annotation.status === "problem")
+            ? "Mock locations · Red: suspected issue · Green: appears correct"
+            : "Mock locations · Green: connections appear correct"}
         </p>
       )}
       <div className="image-caption">

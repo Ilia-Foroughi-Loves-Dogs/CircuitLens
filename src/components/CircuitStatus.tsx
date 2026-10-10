@@ -5,17 +5,19 @@ export function CircuitStatus({
   hasImage,
   hasDescription,
   analysisState,
+  verified,
 }: {
   hasImage: boolean;
   hasDescription: boolean;
   analysisState: AnalysisState;
+  verified: boolean;
 }) {
   return (
     <section className="panel status-panel" aria-live="polite">
       <div className="status-title">
         <Radar size={17} />
         <h2>Workspace status</h2>
-        <span className="phase-tag">PHASE 03</span>
+        <span className="phase-tag">PHASE 04</span>
       </div>
       <div className="status-row">
         {hasImage ? (
@@ -45,16 +47,20 @@ export function CircuitStatus({
         <span className="status-dot" />
         <div>
           <strong>
-            {analysisState === "complete"
-              ? "Mock analysis complete"
-              : analysisState === "analyzing"
-                ? "Analyzing your breadboard…"
-                : "Mock analysis mode"}
+            {verified
+              ? "Circuit Verified"
+              : analysisState === "complete"
+                ? "Mock analysis complete"
+                : analysisState === "analyzing"
+                  ? "Analyzing your breadboard…"
+                  : "Mock analysis mode"}
           </strong>
           <p>
-            {analysisState === "complete"
-              ? "Review the simulated components and suggested fixes below."
-              : "Add an image and expected behavior to try simulated circuit analysis."}
+            {verified
+              ? "Your simulated repair and rescan is complete."
+              : analysisState === "complete"
+                ? "Review the simulated components and suggested fixes below."
+                : "Add an image and expected behavior to try simulated circuit analysis."}
           </p>
         </div>
       </div>

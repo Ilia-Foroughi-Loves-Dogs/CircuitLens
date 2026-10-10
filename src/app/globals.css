@@ -765,6 +765,41 @@ textarea::placeholder {
   line-height: 1;
   pointer-events: auto;
 }
+.annotation-correct .annotation-box {
+  background: #94e3be18;
+}
+.analysis-verified {
+  border-color: #46795c;
+  background: #111e18;
+}
+.verification-success {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 14px;
+  margin-top: 20px;
+  border: 1px solid #46795c;
+  border-radius: 6px;
+  background: #94e3be12;
+  color: var(--mint);
+}
+.verification-success > svg {
+  flex-shrink: 0;
+}
+.verification-success h3 {
+  margin: 0;
+  font-size: 18px;
+}
+.verification-success p,
+.repair-actions p {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.repair-actions {
+  margin-top: 20px;
+  color: var(--muted);
+}
 button.annotation-marker:hover {
   transform: translate(-50%, -50%) scale(1.1);
 }

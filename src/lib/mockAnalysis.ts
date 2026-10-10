@@ -70,3 +70,21 @@ export const mockAnalysis: AnalysisResult = {
     },
   ],
 };
+
+export const verifiedAnalysis: AnalysisResult = {
+  components: mockAnalysis.components,
+  issues: [],
+  annotations: mockAnalysis.annotations.map((annotation) => ({
+    ...annotation,
+    id: `${annotation.id}-verified`,
+    issueId: undefined,
+    label: "✓",
+    status: "correct",
+    description:
+      annotation.id === "led-highlight"
+        ? "Mock: LED polarity appears correct"
+        : annotation.id === "ground-highlight"
+          ? "Mock: ground jumper connection appears correct"
+          : annotation.description,
+  })),
+};
