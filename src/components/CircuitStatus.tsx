@@ -15,7 +15,7 @@ export function CircuitStatus({
       <div className="status-title">
         <Radar size={17} />
         <h2>Workspace status</h2>
-        <span className="phase-tag">PHASE 02</span>
+        <span className="phase-tag">PHASE 03</span>
       </div>
       <div className="status-row">
         {hasImage ? (

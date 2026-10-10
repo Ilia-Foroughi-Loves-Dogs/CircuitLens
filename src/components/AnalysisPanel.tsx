@@ -8,9 +8,13 @@ export type AnalysisState = "idle" | "analyzing" | "complete";
 export function AnalysisPanel({
   state,
   result,
+  selectedIssueId,
+  onSelectIssue,
 }: {
   state: AnalysisState;
   result: AnalysisResult | null;
+  selectedIssueId: string | null;
+  onSelectIssue: (id: string) => void;
 }) {
   if (state === "idle") return null;
   return (
@@ -48,8 +52,14 @@ export function AnalysisPanel({
           </p>
           <ComponentList components={result.components} />
           <div className="issue-list">
-            {result.issues.map((issue) => (
-              <IssueCard key={issue.id} issue={issue} />
+            {result.issues.map((issue, index) => (
+              <IssueCard
+                key={issue.id}
+                issue={issue}
+                number={index + 1}
+                selected={selectedIssueId === issue.id}
+                onSelect={() => onSelectIssue(issue.id)}
+              />
             ))}
           </div>
         </>

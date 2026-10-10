@@ -25,16 +25,19 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [analysisState, setAnalysisState] = useState<AnalysisState>("idle");
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
   const analysisTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const resetAnalysis = () => {
     if (analysisTimer.current) clearTimeout(analysisTimer.current);
     analysisTimer.current = null;
     setAnalysisState("idle");
     setResult(null);
+    setSelectedIssueId(null);
   };
   const analyze = () => {
     if (!image || !description.trim() || analysisTimer.current) return;
     setResult(null);
+    setSelectedIssueId(null);
     setAnalysisState("analyzing");
     analysisTimer.current = setTimeout(() => {
       analysisTimer.current = null;
@@ -96,7 +99,7 @@ export default function Home() {
             FROM BREADBOARD TO UNDERSTANDING
           </span>
           <span className="version-badge">
-            <span className="status-dot" /> v0.2 / MOCK ANALYSIS
+            <span className="status-dot" /> v0.3 / VISUAL DEBUGGING
           </span>
         </div>
       </header>
@@ -139,6 +142,9 @@ export default function Home() {
             name={name}
             onUpload={upload}
             error={error}
+            annotations={result?.annotations ?? []}
+            selectedIssueId={selectedIssueId}
+            onSelectIssue={setSelectedIssueId}
           />
           <div className="sidebar">
             <section className="panel intent-panel">
@@ -192,7 +198,12 @@ export default function Home() {
               hasDescription={!!description.trim()}
               analysisState={analysisState}
             />
-            <AnalysisPanel state={analysisState} result={result} />
+            <AnalysisPanel
+              state={analysisState}
+              result={result}
+              selectedIssueId={selectedIssueId}
+              onSelectIssue={setSelectedIssueId}
+            />
           </div>
         </div>
         <div className="workspace-footer">

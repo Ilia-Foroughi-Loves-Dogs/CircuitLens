@@ -1,3 +1,5 @@
+import type { CircuitAnnotation } from "./annotations";
+
 export type Severity = "HIGH" | "MEDIUM" | "LOW";
 
 export type CircuitIssue = {
@@ -11,9 +13,38 @@ export type CircuitIssue = {
 export type AnalysisResult = {
   components: { name: string; quantity: number; detail?: string }[];
   issues: CircuitIssue[];
+  annotations: CircuitAnnotation[];
 };
 
 export const mockAnalysis: AnalysisResult = {
+  annotations: [
+    {
+      id: "led-highlight",
+      issueId: "led-polarity",
+      label: "1",
+      description: "LED polarity may be reversed",
+      status: "problem",
+      position: { x: 0.46, y: 0.27 },
+      box: { x: 0.455, y: 0.265, width: 0.08, height: 0.17 },
+    },
+    {
+      id: "ground-highlight",
+      issueId: "jumper-row",
+      label: "2",
+      description: "Possible incorrect ground jumper connection",
+      status: "problem",
+      position: { x: 0.56, y: 0.46 },
+      box: { x: 0.495, y: 0.39, width: 0.045, height: 0.1 },
+      arrow: { from: { x: 0.56, y: 0.46 }, to: { x: 0.52, y: 0.425 } },
+    },
+    {
+      id: "power-connection",
+      label: "✓",
+      description: "Mock: power rail connection appears correct",
+      status: "correct",
+      position: { x: 146 / 720, y: 112 / 450 },
+    },
+  ],
   components: [
     { name: "Arduino Uno", quantity: 1 },
     { name: "Red LED", quantity: 1 },

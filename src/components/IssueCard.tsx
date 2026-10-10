@@ -9,9 +9,27 @@ export function SeverityBadge({ severity }: { severity: Severity }) {
   );
 }
 
-export function IssueCard({ issue }: { issue: CircuitIssue }) {
+export function IssueCard({
+  issue,
+  number,
+  selected,
+  onSelect,
+}: {
+  issue: CircuitIssue;
+  number: number;
+  selected: boolean;
+  onSelect: () => void;
+}) {
   return (
-    <article className="issue-card">
+    <article className={`issue-card ${selected ? "is-selected" : ""}`}>
+      <button
+        type="button"
+        className="issue-select"
+        aria-pressed={selected}
+        onClick={onSelect}
+      >
+        Issue {number} · Show on image
+      </button>
       <SeverityBadge severity={issue.severity} />
       <h3>{issue.title}</h3>
       <p>{issue.explanation}</p>

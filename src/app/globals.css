@@ -246,6 +246,7 @@ h1 > span {
   border-radius: 10px;
 }
 .upload-panel {
+  align-self: start;
   padding: 22px;
   display: flex;
   flex-direction: column;
@@ -705,13 +706,106 @@ textarea::placeholder {
   display: flex;
   flex-direction: column;
 }
-.image-viewer > img {
-  width: 100%;
-  height: 350px;
+.image-stage {
   flex: 1;
-  object-fit: contain;
+  min-height: 350px;
   padding: 22px;
-  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.annotated-image {
+  position: relative;
+  max-width: 100%;
+  line-height: 0;
+}
+.annotated-image > img {
+  display: block;
+  max-width: 100%;
+  max-height: 350px;
+  width: auto;
+  height: auto;
+}
+.annotation-overlay,
+.annotation-arrows {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.annotation-problem {
+  color: #ff756e;
+}
+.annotation-correct {
+  color: #94e3be;
+}
+.annotation-box {
+  position: absolute;
+  border: 2px solid currentColor;
+  border-radius: 5px;
+  background: #ff756e18;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
+}
+.annotation-marker {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  background: #11171b;
+  color: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: auto;
+}
+button.annotation-marker:hover {
+  transform: translate(-50%, -50%) scale(1.1);
+}
+.annotation-arrow {
+  stroke: currentColor;
+  stroke-width: 2;
+}
+.annotation-arrow.is-selected {
+  stroke-width: 4;
+}
+.annotation.is-selected .annotation-box {
+  border-width: 3px;
+  background: #ff756e38;
+  box-shadow: 0 0 0 4px #ff756e33;
+}
+.annotation.is-selected .annotation-marker {
+  background: #ff756e;
+  color: #11171b;
+  border-color: #fff;
+  box-shadow: 0 0 0 4px #ff756e44;
+}
+.annotation-legend {
+  margin: 0;
+  padding: 0 16px 12px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.6;
+}
+.issue-card.is-selected {
+  border-color: #ff756e;
+  box-shadow: 0 0 0 1px #ff756e33;
+}
+.issue-select {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  padding: 0 0 12px;
+  background: transparent;
+  color: var(--mint);
+  font-size: 11px;
 }
 .image-caption {
   padding: 13px 17px;
@@ -973,8 +1067,12 @@ textarea::placeholder {
   .image-viewer {
     min-height: 360px;
   }
-  .image-viewer > img {
-    height: 315px;
+  .image-stage {
+    min-height: 315px;
+    padding: 16px;
+  }
+  .annotated-image > img {
+    max-height: 315px;
   }
   .panel-description {
     max-width: none;

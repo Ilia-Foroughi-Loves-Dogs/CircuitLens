@@ -1,4 +1,5 @@
 "use client";
+import type { CircuitAnnotation } from "@/lib/annotations";
 
 import { useRef, useState } from "react";
 import { ArrowUpRight, ImagePlus, Upload } from "lucide-react";
@@ -9,9 +10,20 @@ type Props = {
   name: string | null;
   onUpload: (file: File) => void;
   error: string | null;
+  annotations: CircuitAnnotation[];
+  selectedIssueId: string | null;
+  onSelectIssue: (id: string) => void;
 };
 
-export function CircuitUploader({ image, name, onUpload, error }: Props) {
+export function CircuitUploader({
+  image,
+  name,
+  onUpload,
+  error,
+  annotations,
+  selectedIssueId,
+  onSelectIssue,
+}: Props) {
   const input = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const select = () => input.current?.click();
@@ -50,7 +62,14 @@ export function CircuitUploader({ image, name, onUpload, error }: Props) {
           if (file) onUpload(file);
         }}
       >
-        <CircuitViewer image={image} name={name} onReplace={select} />
+        <CircuitViewer
+          image={image}
+          name={name}
+          onReplace={select}
+          annotations={annotations}
+          selectedIssueId={selectedIssueId}
+          onSelectIssue={onSelectIssue}
+        />
         {!image && (
           <div className="upload-content">
             <div className="upload-icon">

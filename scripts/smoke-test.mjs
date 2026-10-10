@@ -42,9 +42,29 @@ try {
   ).toBeVisible();
   await expect(page.locator(".severity-high")).toHaveText("HIGH");
   await expect(page.locator(".severity-medium")).toHaveText("MEDIUM");
+  await expect(page.locator(".annotation-marker")).toHaveCount(3);
+  await page.getByRole("button", { name: "Issue 1 · Show on image" }).click();
+  await expect(
+    page.locator('[data-annotation-id="led-highlight"]'),
+  ).toHaveClass(/is-selected/);
+  await page.getByRole("button", { name: "Issue 2 · Show on image" }).focus();
+  await page.keyboard.press("Enter");
+  await expect(
+    page.locator('[data-annotation-id="ground-highlight"]'),
+  ).toHaveClass(/is-selected/);
+  await expect(
+    page.locator('[data-annotation-id="led-highlight"]'),
+  ).not.toHaveClass(/is-selected/);
+  await page
+    .getByRole("button", { name: "Issue 1: LED polarity may be reversed" })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Issue 1 · Show on image" }),
+  ).toHaveAttribute("aria-pressed", "true");
   await page.locator("#description").fill("");
   await expect(analyze).toBeDisabled();
   await expect(page.locator(".analysis-panel")).toHaveCount(0);
+  await expect(page.locator(".annotation-overlay")).toHaveCount(0);
   await page.locator("input[type=file]").setInputFiles({
     name: "invalid.txt",
     mimeType: "text/plain",
@@ -74,6 +94,7 @@ try {
   await page.getByRole("button", { name: "Load Demo Circuit" }).click();
   await page.waitForTimeout(1600);
   await expect(page.locator(".analysis-panel")).toHaveCount(0);
+  await expect(page.locator(".annotation-overlay")).toHaveCount(0);
   await analyze.click();
   await page.getByText("2 issues detected").waitFor();
   await page.screenshot({
@@ -82,6 +103,36 @@ try {
   });
   for (const width of [390, 768, 1024]) {
     await page.setViewportSize({ width, height: 844 });
+    const alignment = await page.evaluate(() => {
+      const image = document
+        .querySelector(".annotated-image img")
+        .getBoundingClientRect();
+      const overlay = document
+        .querySelector(".annotation-overlay")
+        .getBoundingClientRect();
+      const box = document
+        .querySelector('[data-annotation-id="led-highlight"] .annotation-box')
+        .getBoundingClientRect();
+      return {
+        image: {
+          x: image.x,
+          y: image.y,
+          width: image.width,
+          height: image.height,
+        },
+        overlay: {
+          x: overlay.x,
+          y: overlay.y,
+          width: overlay.width,
+          height: overlay.height,
+        },
+        x: (box.x - image.x) / image.width,
+        y: (box.y - image.y) / image.height,
+      };
+    });
+    assert.deepEqual(alignment.image, alignment.overlay);
+    assert.ok(Math.abs(alignment.x - 0.455) < 0.002);
+    assert.ok(Math.abs(alignment.y - 0.265) < 0.002);
     assert.equal(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= window.innerWidth,
